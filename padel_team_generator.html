@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Padel Toernooi Tracker</title>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        background-color: #f4f4f4;
+        margin: 0;
+        padding: 20px;
+    }
+    h1 {
+        text-align: center;
+        color: #2c3e50;
+    }
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 20px;
+        background: white;
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    th, td {
+        padding: 12px;
+        text-align: center;
+        border-bottom: 1px solid #ddd;
+    }
+    th {
+        background-color: #3498db;
+        color: white;
+    }
+    tr:hover {
+        background-color: #f1f1f1;
+    }
+    button {
+        background-color: #3498db;
+        color: white;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 16px;
+    }
+    button:hover {
+        background-color: #2980b9;
+    }
+    .container {
+        max-width: 800px;
+        margin: auto;
+    }
+</style>
+</head>
+<body>
+<div class="container">
+    <h1>Padel Toernooi Tracker</h1>
+    <table id="leaderboard">
+        <thead>
+            <tr>
+                <th>Spelernaam</th>
+                <th>Punten</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr><td>Rishaad</td><td contenteditable="true">25</td></tr>
+            <tr><td>Wirin</td><td contenteditable="true">18</td></tr>
+            <tr><td>Jord</td><td contenteditable="true">15</td></tr>
+            <tr><td>Spencer</td><td contenteditable="true">10</td></tr>
+            <tr><td>Ayaan</td><td contenteditable="true">8</td></tr>
+            <tr><td>Sajni</td><td contenteditable="true">5</td></tr>
+        </tbody>
+    </table>
+    <div style="text-align:center;">
+        <button onclick="genereerTeams()">Genereer Teams</button>
+    </div>
+    <h2 style="text-align:center;">Teams</h2>
+    <table id="teams">
+        <thead>
+            <tr>
+                <th>Speler Hoog</th>
+                <th>Punten Hoog</th>
+                <th>Speler Laag</th>
+                <th>Punten Laag</th>
+            </tr>
+        </thead>
+        <tbody>
+        </tbody>
+    </table>
+</div>
+<script>
+function genereerTeams() {
+    let rows = document.querySelectorAll('#leaderboard tbody tr');
+    let spelers = [];
+    rows.forEach(row => {
+        let naam = row.cells[0].innerText.trim();
+        let punten = parseInt(row.cells[1].innerText.trim()) || 0;
+        spelers.push({ naam, punten });
+    });
+    spelers.sort((a, b) => b.punten - a.punten);
+    let teams = [];
+    while (spelers.length > 1) {
+        let hoogste = spelers.shift();
+        let laagste = spelers.pop();
+        teams.push({
+            hoog: hoogste.naam,
+            puntenHoog: hoogste.punten,
+            laag: laagste.naam,
+            puntenLaag: laagste.punten
+        });
+    }
+    let teamTable = document.querySelector('#teams tbody');
+    teamTable.innerHTML = '';
+    teams.forEach(team => {
+        let row = `<tr>
+            <td>${team.hoog}</td>
+            <td>${team.puntenHoog}</td>
+            <td>${team.laag}</td>
+            <td>${team.puntenLaag}</td>
+        </tr>`;
+        teamTable.innerHTML += row;
+    });
+}
+</script>
+</body>
+</html>
