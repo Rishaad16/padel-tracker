@@ -3,29 +3,43 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Padel Toernooi Tracker</title>
+<title>The Sunday League - Padel Tracker</title>
 <style>
     body {
-        font-family: Arial, sans-serif;
-        background-color: #f4f4f4;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background: url('https://upload.wikimedia.org/wikipedia/commons/e/e7/Padel_court_2.jpg') no-repeat center center fixed;
+        background-size: cover;
         margin: 0;
+        padding: 0;
+        color: #fff;
+    }
+    .overlay {
+        background-color: rgba(0, 0, 0, 0.6);
+        min-height: 100vh;
         padding: 20px;
     }
     h1 {
         text-align: center;
-        color: #2c3e50;
+        font-size: 3em;
+        margin-bottom: 10px;
+        color: #f1c40f;
+        text-shadow: 2px 2px #000;
+    }
+    h2 {
+        color: #2ecc71;
+        text-shadow: 1px 1px #000;
     }
     table {
         width: 100%;
         border-collapse: collapse;
         margin-bottom: 20px;
-        background: white;
+        background: rgba(255, 255, 255, 0.95);
+        color: #000;
         border-radius: 10px;
         overflow: hidden;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     }
     th, td {
-        padding: 12px;
+        padding: 10px;
         text-align: center;
         border-bottom: 1px solid #ddd;
     }
@@ -37,46 +51,61 @@
         background-color: #f1f1f1;
     }
     button {
-        background-color: #3498db;
+        background-color: #e67e22;
         color: white;
-        padding: 10px 20px;
+        padding: 8px 16px;
         border: none;
         border-radius: 5px;
         cursor: pointer;
-        font-size: 16px;
+        margin: 2px;
+        font-size: 1em;
     }
     button:hover {
-        background-color: #2980b9;
+        background-color: #d35400;
+    }
+    input, select {
+        padding: 6px;
+        margin: 2px;
     }
     .container {
-        max-width: 800px;
+        max-width: 1000px;
         margin: auto;
     }
 </style>
 </head>
 <body>
+<div class="overlay">
 <div class="container">
-    <h1>Padel Toernooi Tracker</h1>
+    <h1>🎾 The Sunday League - Padel Tracker</h1>
+    
+    <h2>Spelers Beheer</h2>
+    <input type="text" id="newPlayerName" placeholder="Naam nieuwe speler">
+    <button onclick="addPlayer()">Speler toevoegen</button>
+    
     <table id="leaderboard">
         <thead>
             <tr>
-                <th>Spelernaam</th>
+                <th>Naam</th>
+                <th>Wedstrijden</th>
+                <th>Winst</th>
+                <th>Verlies</th>
+                <th>Win%</th>
                 <th>Punten</th>
+                <th>Verwijderen</th>
             </tr>
         </thead>
-        <tbody>
-            <tr><td>Rishaad</td><td contenteditable="true">25</td></tr>
-            <tr><td>Wirin</td><td contenteditable="true">18</td></tr>
-            <tr><td>Jord</td><td contenteditable="true">15</td></tr>
-            <tr><td>Spencer</td><td contenteditable="true">10</td></tr>
-            <tr><td>Ayaan</td><td contenteditable="true">8</td></tr>
-            <tr><td>Sajni</td><td contenteditable="true">5</td></tr>
-        </tbody>
+        <tbody></tbody>
     </table>
-    <div style="text-align:center;">
-        <button onclick="genereerTeams()">Genereer Teams</button>
-    </div>
-    <h2 style="text-align:center;">Teams</h2>
+    
+    <h2>Wedstrijd Registratie</h2>
+    <select id="playerA"></select> vs <select id="playerB"></select>
+    <select id="winner">
+        <option value="">Kies winnaar</option>
+    </select>
+    <button onclick="recordMatch()">Opslaan</button>
+    
+    <h2>Teams</h2>
+    <button onclick="generateTeams()">Genereer Teams</button>
     <table id="teams">
         <thead>
             <tr>
@@ -86,43 +115,114 @@
                 <th>Punten Laag</th>
             </tr>
         </thead>
-        <tbody>
-        </tbody>
+        <tbody></tbody>
     </table>
 </div>
+</div>
+
 <script>
-function genereerTeams() {
-    let rows = document.querySelectorAll('#leaderboard tbody tr');
-    let spelers = [];
-    rows.forEach(row => {
-        let naam = row.cells[0].innerText.trim();
-        let punten = parseInt(row.cells[1].innerText.trim()) || 0;
-        spelers.push({ naam, punten });
-    });
-    spelers.sort((a, b) => b.punten - a.punten);
-    let teams = [];
-    while (spelers.length > 1) {
-        let hoogste = spelers.shift();
-        let laagste = spelers.pop();
-        teams.push({
-            hoog: hoogste.naam,
-            puntenHoog: hoogste.punten,
-            laag: laagste.naam,
-            puntenLaag: laagste.punten
-        });
-    }
-    let teamTable = document.querySelector('#teams tbody');
-    teamTable.innerHTML = '';
-    teams.forEach(team => {
+let players = [
+    {name: "Rishaad", matches: 0, wins: 0, losses: 0, points: 0},
+    {name: "Wirin", matches: 0, wins: 0, losses: 0, points: 0},
+    {name: "Jord", matches: 0, wins: 0, losses: 0, points: 0},
+    {name: "Spencer", matches: 0, wins: 0, losses: 0, points: 0},
+    {name: "Ayaan", matches: 0, wins: 0, losses: 0, points: 0},
+    {name: "Sajni", matches: 0, wins: 0, losses: 0, points: 0}
+];
+
+function updateLeaderboard() {
+    let tbody = document.querySelector("#leaderboard tbody");
+    tbody.innerHTML = "";
+    players.sort((a,b) => b.points - a.points);
+    players.forEach((p, i) => {
+        let winPercent = p.matches > 0 ? ((p.wins / p.matches) * 100).toFixed(1) + "%" : "0%";
         let row = `<tr>
-            <td>${team.hoog}</td>
-            <td>${team.puntenHoog}</td>
-            <td>${team.laag}</td>
-            <td>${team.puntenLaag}</td>
+            <td contenteditable="true" onblur="editName(${i}, this.innerText)">${p.name}</td>
+            <td>${p.matches}</td>
+            <td>${p.wins}</td>
+            <td>${p.losses}</td>
+            <td>${winPercent}</td>
+            <td contenteditable="true" onblur="editPoints(${i}, this.innerText)">${p.points}</td>
+            <td><button onclick="removePlayer(${i})">X</button></td>
         </tr>`;
-        teamTable.innerHTML += row;
+        tbody.innerHTML += row;
+    });
+    updatePlayerSelects();
+}
+
+function updatePlayerSelects() {
+    let selects = [document.getElementById("playerA"), document.getElementById("playerB"), document.getElementById("winner")];
+    selects.forEach(sel => sel.innerHTML = "");
+    players.forEach((p, i) => {
+        selects.forEach(sel => {
+            let opt = document.createElement("option");
+            opt.value = i;
+            opt.textContent = p.name;
+            sel.appendChild(opt.cloneNode(true));
+        });
     });
 }
+
+function addPlayer() {
+    let name = document.getElementById("newPlayerName").value.trim();
+    if(name) {
+        players.push({name, matches: 0, wins: 0, losses: 0, points: 0});
+        document.getElementById("newPlayerName").value = "";
+        updateLeaderboard();
+    }
+}
+
+function removePlayer(index) {
+    players.splice(index, 1);
+    updateLeaderboard();
+}
+
+function editName(index, newName) {
+    players[index].name = newName.trim();
+    updateLeaderboard();
+}
+
+function editPoints(index, newPoints) {
+    players[index].points = parseInt(newPoints) || 0;
+    updateLeaderboard();
+}
+
+function recordMatch() {
+    let a = parseInt(document.getElementById("playerA").value);
+    let b = parseInt(document.getElementById("playerB").value);
+    let w = parseInt(document.getElementById("winner").value);
+    if(a === b || isNaN(a) || isNaN(b) || isNaN(w)) return alert("Selecteer twee verschillende spelers en een winnaar.");
+    players[a].matches++;
+    players[b].matches++;
+    if(w === a) {
+        players[a].wins++;
+        players[b].losses++;
+    } else {
+        players[b].wins++;
+        players[a].losses++;
+    }
+    updateLeaderboard();
+}
+
+function generateTeams() {
+    let sorted = [...players].sort((a,b) => b.points - a.points);
+    let teams = [];
+    while(sorted.length > 1) {
+        let high = sorted.shift();
+        let low = sorted.pop();
+        teams.push({high: high.name, highPoints: high.points, low: low.name, lowPoints: low.points});
+    }
+    let tbody = document.querySelector("#teams tbody");
+    tbody.innerHTML = "";
+    teams.forEach(t => {
+        tbody.innerHTML += `<tr>
+            <td>${t.high}</td><td>${t.highPoints}</td>
+            <td>${t.low}</td><td>${t.lowPoints}</td>
+        </tr>`;
+    });
+}
+
+updateLeaderboard();
 </script>
 </body>
 </html>
